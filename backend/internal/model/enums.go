@@ -3,9 +3,9 @@ package model
 type UserStatus string
 
 const (
-	Active   UserStatus = "ACTIVE"
-	Inactive UserStatus = "INACTIVE"
-	Banned   UserStatus = "BANNED"
+	UserActive   UserStatus = "ACTIVE"
+	UserInactive UserStatus = "INACTIVE"
+	UserBanned   UserStatus = "BANNED"
 )
 
 type Role string
@@ -37,7 +37,7 @@ const (
 	Warranty DocumentType = "WARRANTY"
 	Image    DocumentType = "IMAGE"
 	Report   DocumentType = "REPORT"
-	Other    DocumentType = "OTHER"
+	OtherDoc DocumentType = "OTHER"
 )
 
 type AuditStatus string
@@ -57,4 +57,56 @@ const (
 	Unregistered FindingType = "UNREGISTERED"
 	Damaged      FindingType = "DAMAGED"
 	Misplaced    FindingType = "MISPLACED"
+)
+
+type NotificationType string
+
+const (
+	Info    NotificationType = "INFO"
+	Warning NotificationType = "WARNING"
+	Alert   NotificationType = "ALERT"
+)
+
+type DepreciationMethod string
+
+const (
+	StraightLine     DepreciationMethod = "STRAIGHT_LINE"
+	DecliningBalance DepreciationMethod = "DECLINING_BALANCE"
+)
+
+type AssetCategory string
+
+const (
+	ItEquipment     AssetCategory = "IT_EQUIPMENT"
+	OfficeEquipment AssetCategory = "OFFICE_EQUIPMENT"
+	Furniture       AssetCategory = "FURNITURE"
+	Vehicle         AssetCategory = "VEHICLE"
+	OtherAsset      AssetCategory = "OTHER"
+)
+
+type AssetStatus string
+
+const (
+	AssetActive           AssetStatus = "ACTIVE"
+	AssetInactive         AssetStatus = "INACTIVE"
+	AssetDisposed         AssetStatus = "DISPOSED"
+	AssetLost             AssetStatus = "LOST"
+	AssetUnderMaintenance AssetStatus = "UNDER_MAINTENANCE"
+)
+
+type AssetNature string
+
+const (
+	Tangible   AssetNature = "TANGIBLE"
+	Intangible AssetNature = "INTANGIBLE"
+)
+
+type AssetType string
+
+const (
+	AssetEquipment  AssetType = "EQUIPMENT"
+	AssetFurniture  AssetType = "FURNITURE"
+	AssetVehicle    AssetType = "VEHICLE"
+	AssetElectronic AssetType = "ELECTRONIC"
+	AssetOther      AssetType = "OTHER"
 )
