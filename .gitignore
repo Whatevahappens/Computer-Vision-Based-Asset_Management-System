@@ -1,0 +1,21 @@
+# Ignore all log files
+*.log
+
+# Ignore .env files in the root only
+/.env
+
+# Ignore the specific directory 'node_modules'
+node_modules
+
+# Ignore dist
+dist/
+
+# Ignore build
+build/
+
+# Ignore bin
+bin/
+
+# Ignore vscode and idea
+.vscode/
+.idea/
