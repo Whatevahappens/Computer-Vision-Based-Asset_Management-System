@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/Whatevahappens/Computer_Vision_Based_Asset_Management_System/backend/handlers"
 )
 
 func main() {
-	http.HandleFunc("/", HelloServer)
+	http.HandleFunc("/", handlers.HelloServer)
 	http.ListenAndServe(":8080", nil)
-}
-
-func HelloServer(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
 }
