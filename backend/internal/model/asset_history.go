@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type ChangeType string
 
 const (
@@ -13,6 +15,8 @@ const (
 )
 
 type AssetHistory struct {
-	ID string
-	ChangeType
+	ID          string
+	ChangeType  ChangeType
+	ChangedAt   time.Time
+	Description string
 }
