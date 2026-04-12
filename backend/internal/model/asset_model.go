@@ -4,7 +4,7 @@ type AssetModel struct {
 	ID                      string
 	Brand                   string
 	ModelName               string
-	AssetType               AssetType
+	AssetModelType          AssetType
 	Category                AssetCategory
 	DefaultUnitPrice        int
 	DefaultUsefulLifeMonths int
