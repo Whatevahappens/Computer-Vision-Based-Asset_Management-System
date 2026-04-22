@@ -1,43 +1,49 @@
 package repository
 
 import (
+	"backend/internal/database"
 	"backend/internal/model"
-
-	"gorm.io/gorm"
 )
 
-type UserRepository interface {
-	FindByEmail(email string) (*model.User, error)
-	FindByResetToken(token string) (*model.User, error)
-	Update(user *model.User) error
+func CreateUser(user *model.User) error {
+	return database.DB.Create(user).Error
 }
 
-type userRepository struct {
-	db *gorm.DB
-}
-
-func NewUserRepository(db *gorm.DB) UserRepository {
-	return &userRepository{db: db}
-}
-
-func (r *userRepository) FindByEmail(email string) (*model.User, error) {
+func FindUserByID(id string) (*model.User, error) {
 	var user model.User
-	err := r.db.Where("email = ?", email).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	err := database.DB.Preload("Department").First(&user, "id = ?", id).Error
+	return &user, err
 }
 
-func (r *userRepository) FindByResetToken(token string) (*model.User, error) {
+func FindUserByUsername(username string) (*model.User, error) {
 	var user model.User
-	err := r.db.Where("reset_token = ?", token).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	err := database.DB.First(&user, "username = ?", username).Error
+	return &user, err
 }
 
-func (r *userRepository) Update(user *model.User) error {
-	return r.db.Save(user).Error
+func FindUserByEmail(email string) (*model.User, error) {
+	var user model.User
+	err := database.DB.First(&user, "email = ?", email).Error
+	return &user, err
+}
+
+func ListUsers(offset, limit int, search string) ([]model.User, int64, error) {
+	var users []model.User
+	var total int64
+	q := database.DB.Model(&model.User{})
+	if search != "" {
+		q = q.Where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?",
+			"%"+search+"%", "%"+search+"%", "%"+search+"%")
+	}
+	q.Count(&total)
+	err := q.Preload("Department").Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error
+	return users, total, err
+}
+
+func UpdateUser(user *model.User) error {
+	return database.DB.Save(user).Error
+}
+
+func DeactivateUser(id string) error {
+	return database.DB.Model(&model.User{}).Where("id = ?", id).Update("status", model.UserInactive).Error
 }
