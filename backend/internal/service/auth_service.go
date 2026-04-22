@@ -2,87 +2,48 @@ package service
 
 import (
 	"backend/internal/dto"
+	"backend/internal/middleware"
 	"backend/internal/repository"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService interface {
-	Login(req dto.LoginRequest) (*dto.LoginResponse, error)
-	RequestPasswordReset(req dto.ResetPasswordRequest) error
-	ConfirmPasswordReset(req dto.ResetPasswordConfirm) error
-}
-
-type authService struct {
-	userRepo repository.UserRepository
-}
-
-func NewAuthService(userRepo repository.UserRepository) AuthService {
-	return &authService{userRepo: userRepo}
-}
-
-func (s *authService) Login(req dto.LoginRequest) (*dto.LoginResponse, error) {
-	user, err := s.userRepo.FindByEmail(req.Email)
+func Login(username, password string, expiryHours int) (string, dto.UserResponse, error) {
+	user, err := repository.FindUserByUsername(username)
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		return "", dto.UserResponse{}, errors.New("invalid credentials")
 	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return nil, errors.New("invalid credentials")
+	if user.Status == "INACTIVE" || user.Status == "SUSPENDED" {
+		return "", dto.UserResponse{}, errors.New("account is disabled")
 	}
-
-	token := "jwt-token-for-" + user.Email
-
-	return &dto.LoginResponse{
-		Token: token,
-		Email: user.Email,
-	}, nil
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return "", dto.UserResponse{}, errors.New("invalid credentials")
+	}
+	token, err := middleware.GenerateToken(user.ID, user.Username, string(user.Role), expiryHours)
+	if err != nil {
+		return "", dto.UserResponse{}, errors.New("failed to generate token")
+	}
+	resp := dto.UserResponse{
+		ID: user.ID, FirstName: user.FirstName, LastName: user.LastName,
+		Email: user.Email, Username: user.Username, Phone: user.Phone,
+		Status: string(user.Status), Role: string(user.Role), DepartmentID: user.DepartmentID,
+	}
+	return token, resp, nil
 }
 
-func (s *authService) RequestPasswordReset(req dto.ResetPasswordRequest) {
-	user, err := s.userRepo.FindByEmail(req.Email)
+func ChangePassword(userID, currentPwd, newPwd string) error {
+	user, err := repository.FindUserByID(userID)
 	if err != nil {
-		return nil
+		return errors.New("user not found")
 	}
-
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return errors.New("failed to generate token")
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(currentPwd)); err != nil {
+		return errors.New("current password is incorrect")
 	}
-	token := hex.EncodeToString(bytes)
-
-	expiry := time.Now().Add(1 * time.Hour)
-	user.ResetToken = token
-	user.ResetExpiresAt = &expiry
-
-	if err := s.userRepo.Update(user); err != nil {
-		return errors.New("failed to save reset token")
-	}
-
-	return nil
-}
-
-func (s *authService) ConfirmPasswordReset(req model.ResetPasswordConfirm) {
-	user, err := s.userRepo.FindByResetToken(req.Token)
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPwd), 12)
 	if err != nil {
-		return errors.New("invalid or expired token")
+		return err
 	}
-	if user.ResetExpiresAt == nil || user.ResetExpiresAt.Before((time.Now())) {
-		return errors.New("invalid or expired token")
-	}
-
-	hashed, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return errors.New("failed to hash password")
-	}
-
-	user.Password = string(hashed)
-	user.ResetToken = ""
-	user.ResetExpiresAt = nil
-
-	return s.userRepo.Update(user)
+	user.PasswordHash = string(hash)
+	return repository.UpdateUser(user)
 }
