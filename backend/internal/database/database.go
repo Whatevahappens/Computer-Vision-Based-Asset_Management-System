@@ -21,7 +21,7 @@ func Connect(cfg *config.Config) {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	fmt.Println("✓ Database connected")
+	fmt.Println("Database connected")
 }
 
 func Migrate() {
@@ -42,5 +42,5 @@ func Migrate() {
 	if err != nil {
 		log.Fatalf("Failed to migrate: %v", err)
 	}
-	fmt.Println("✓ Database migrated")
+	fmt.Println("Database migrated")
 }
