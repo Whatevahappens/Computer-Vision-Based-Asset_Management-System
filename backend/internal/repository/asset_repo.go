@@ -149,3 +149,37 @@ func UpdateLocation(l *model.Location) error {
 func DeleteLocation(id string) error {
 	return database.DB.Delete(&model.Location{}, "id = ?", id).Error
 }
+
+func CreateDepartment(d *model.Department) error {
+	return database.DB.Create(d).Error
+}
+
+func ListDepartments() ([]model.Department, error) {
+	var deps []model.Department
+	err := database.DB.Order("name").Find(&deps).Error
+	return deps, err
+}
+
+func FindDepartmentByID(id string) (*model.Department, error) {
+	var d model.Department
+	err := database.DB.First(&d, "id = ?", id).Error
+	return &d, err
+}
+
+func UpdateDepartment(d *model.Department) error {
+	return database.DB.Save(d).Error
+}
+
+func DeleteDepartment(id string) error {
+	return database.DB.Delete(&model.Department{}, "id = ?", id).Error
+}
+
+func CreateDocument(doc *model.Document) error {
+	return database.DB.Create(doc).Error
+}
+
+func ListDocumentByAsset(assetID string) ([]model.Document, error) {
+	var docs []model.Document
+	err := database.DB.Where("asset_id = ?", assetID).Find(&docs).Error
+	return docs, err
+}
