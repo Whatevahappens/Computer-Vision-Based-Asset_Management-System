@@ -140,3 +140,231 @@ func AssignAsset(c *gin.Context) {
 	asset, _ := repository.FindAssetByID(c.Param("id"))
 	c.JSON(http.StatusOK, asset)
 }
+
+func TransferAsset(c *gin.Context) {
+	var req dto.TransferAssetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userID := middleware.GetUserID(c)
+	if err := service.TransferAsset(c.Param("id"), req.ToUserID, req.LocationID, req.Notes, userID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	asset, _ := repository.FindAssetByID(c.Param("id"))
+	c.JSON(http.StatusOK, asset)
+}
+
+func DisposeAsset(c *gin.Context) {
+	var req dto.DisposeAssetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userID := middleware.GetUserID(c)
+	if err := service.DisposeAsset(c.Param("id"), req.Reason, req.ResidualValue, req.Notes, userID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "asset disposed"})
+}
+
+func GetAssetHistory(c *gin.Context) {
+	history, err := repository.GetAssetHistory(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, history)
+}
+
+func GetMyAssets(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	assets, err := repository.ListAssetsByUser(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, assets)
+}
+
+func CreateAssetModel(c *gin.Context) {
+	var req dto.CreateAssetModelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	m := &model.AssetModel{
+		ID:                      uuid.New().String(),
+		Brand:                   req.Brand,
+		ModelName:               req.ModelName,
+		AssetModelType:          model.AssetType(req.AssetType),
+		Category:                model.AssetCategory(req.Category),
+		DefaultUnitPrice:        req.DefaultUnitPrice,
+		DefaultUsefulLifeMonths: req.DefaultUsefulLifeMonths,
+		DepreciationMethod:      model.DepreciationMethod(req.DepreciationMethod),
+	}
+	if m.DepreciationMethod == "" {
+		m.DepreciationMethod = model.StraightLine
+	}
+	if err := repository.CreateAssetModel(m); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, m)
+}
+
+func ListAssetModels(c *gin.Context) {
+	models, err := repository.ListAssetModels()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, models)
+}
+
+func GetAssetModel(c *gin.Context) {
+	m, err := repository.FindAssetModelByID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	c.JSON(http.StatusOK, m)
+}
+
+func CreateLocation(c *gin.Context) {
+	var req dto.CreateLocationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	loc := &model.Location{
+		ID: uuid.New().String(), Name: req.Name,
+		Building: req.Building, Floor: req.Floor, Room: req.Room, Capacity: req.Capacity,
+	}
+	if err := repository.CreateLocation(loc); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, loc)
+}
+
+func ListLocations(c *gin.Context) {
+	locs, err := repository.ListLocations()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, locs)
+}
+
+func GetLocation(c *gin.Context) {
+	l, err := repository.FindLocationByID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, l)
+}
+
+func UpdateLocation(c *gin.Context) {
+	l, err := repository.FindLocationByID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	var req dto.CreateLocationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.Name != "" {
+		l.Name = req.Name
+	}
+	if req.Building != "" {
+		l.Building = req.Building
+	}
+	if req.Floor != "" {
+		l.Floor = req.Floor
+	}
+	if req.Room != "" {
+		l.Room = req.Room
+	}
+	if req.Capacity > 0 {
+		l.Capacity = req.Capacity
+	}
+	repository.UpdateLocation(l)
+	c.JSON(http.StatusOK, l)
+}
+
+func DeleteLocation(c *gin.Context) {
+	if err := repository.DeleteLocation(c.Param("id")); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+}
+
+func CreateDepartment(c *gin.Context) {
+	var req dto.CreateDepartmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	d := &model.Department{
+		ID: uuid.New().String(), Name: req.Name, Description: req.Description,
+	}
+	if err := repository.CreateDepartment(d); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, d)
+}
+
+func ListDepartments(c *gin.Context) {
+	deps, err := repository.ListDepartments()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, deps)
+}
+
+func GetDepartment(c *gin.Context) {
+	d, err := repository.FindDepartmentByID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	c.JSON(http.StatusOK, d)
+}
+
+func UpdateDepartment(c *gin.Context) {
+	d, err := repository.FindDepartmentByID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	var req dto.CreateDepartmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.Name != "" {
+		d.Name = req.Name
+	}
+	if req.Description != "" {
+		d.Description = req.Description
+	}
+	repository.UpdateDepartment(d)
+	c.JSON(http.StatusOK, d)
+}
+
+func DeleteDepartment(c *gin.Context) {
+	if err := repository.DeleteDepartment(c.Param("id")); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+}
