@@ -126,6 +126,17 @@ func UpdateAsset(c *gin.Context) {
 	c.JSON(http.StatusOK, full)
 }
 
+func DeleteAsset(c *gin.Context) {
+	asset, err := repository.FindAssetByID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	asset.Status = model.AssetDisposed
+	repository.UpdateAsset(asset)
+	c.JSON(http.StatusOK, gin.H{"message": "asset disposed"})
+}
+
 func AssignAsset(c *gin.Context) {
 	var req dto.AssignAssetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
