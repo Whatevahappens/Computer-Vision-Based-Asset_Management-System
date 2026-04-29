@@ -73,7 +73,7 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 			ID:             uuid.New().String(),
 			Type:           findingType,
 			Confidence:     det.Confidence,
-			Notes:          fmt.Sprintf("Detected %s (confidence: %.2f)"),
+			Notes:          fmt.Sprintf("Detected %s (confidence: %.2f)", det.ClassName, det.Confidence),
 			AuditSessionID: sessionID,
 		}
 		if assetID, ok := registeredMap[det.ClassName]; ok {
