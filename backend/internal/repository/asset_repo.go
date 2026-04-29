@@ -183,3 +183,5 @@ func ListDocumentByAsset(assetID string) ([]model.Document, error) {
 	err := database.DB.Where("asset_id = ?", assetID).Find(&docs).Error
 	return docs, err
 }
+
+

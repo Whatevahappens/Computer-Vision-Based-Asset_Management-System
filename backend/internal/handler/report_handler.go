@@ -5,6 +5,7 @@ import (
 	"backend/internal/middleware"
 	"backend/internal/service"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +34,7 @@ func GenerateReport(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":  "report generated",
 		"filePath": filePath,
-		"download": "/api/v1/reports/download/" + filePath.Base(filePath),
+		"download": "/api/v1/reports/download/" + filepath.Base(filePath),
 	})
 }
 

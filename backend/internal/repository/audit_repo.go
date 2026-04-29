@@ -47,7 +47,7 @@ func CountAuditSessions() (int64, error) {
 	return count, err
 }
 
-func CreateNoficication(n *model.Notification) error {
+func CreateNotification(n *model.Notification) error {
 	return database.DB.Create(n).Error
 }
 
