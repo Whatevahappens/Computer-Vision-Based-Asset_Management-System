@@ -13,9 +13,9 @@ import (
 
 type DashboardStats struct {
 	TotalAssets  int64 `json:"totalAssets"`
-	ActiveAssets int64 `json: "activeAssets"`
+	ActiveAssets int64 `json:"activeAssets"`
 	TotalValue   int64 `json:"totalValue"`
-	TotalAudits  int64 `json: "totalAudits"`
+	TotalAudits  int64 `json:"totalAudits"`
 }
 
 func GetDashboardStats() (*DashboardStats, error) {
