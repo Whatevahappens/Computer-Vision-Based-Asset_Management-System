@@ -13,8 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ───────── Asset CRUD ─────────
-
 func CreateAsset(c *gin.Context) {
 	var req dto.CreateAssetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -24,7 +22,7 @@ func CreateAsset(c *gin.Context) {
 
 	acqDate, err := time.Parse("2006-01-02", req.AcquisitionDate)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date format, use YYYY-MM-DD"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date format, use YYYY-MM_DD"})
 		return
 	}
 
@@ -43,7 +41,7 @@ func CreateAsset(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// Re-fetch with preloads
+	// re-fetch with preloads
 	full, _ := repository.FindAssetByID(asset.ID)
 	c.JSON(http.StatusCreated, full)
 }
@@ -60,8 +58,12 @@ func GetAsset(c *gin.Context) {
 func ListAssets(c *gin.Context) {
 	var q dto.PaginationQuery
 	c.ShouldBindQuery(&q)
-	if q.Limit <= 0 { q.Limit = 20 }
-	if q.Page <= 0 { q.Page = 1 }
+	if q.Limit <= 0 {
+		q.Limit = 20
+	}
+	if q.Page <= 0 {
+		q.Page = 1
+	}
 
 	assets, total, err := repository.ListAssets(q.Offset(), q.Limit, q.Search, q.Status)
 	if err != nil {
@@ -70,7 +72,9 @@ func ListAssets(c *gin.Context) {
 	}
 
 	pages := int(total) / q.Limit
-	if int(total)%q.Limit != 0 { pages++ }
+	if int(total)%q.Limit != 0 {
+		pages++
+	}
 
 	c.JSON(http.StatusOK, dto.PaginatedResponse{
 		Data: assets, Total: total, Page: q.Page, Limit: q.Limit, TotalPages: pages,
@@ -90,11 +94,21 @@ func UpdateAsset(c *gin.Context) {
 		return
 	}
 
-	if req.AssetName != "" { asset.AssetName = req.AssetName }
-	if req.Description != "" { asset.Description = req.Description }
-	if req.Status != "" { asset.Status = model.AssetStatus(req.Status) }
-	if req.LocationID != "" { asset.LocationID = &req.LocationID }
-	if req.DepartmentID != "" { asset.DepartmentID = &req.DepartmentID }
+	if req.AssetName != "" {
+		asset.AssetName = req.AssetName
+	}
+	if req.Description != "" {
+		asset.Description = req.Description
+	}
+	if req.Status != "" {
+		asset.Status = model.AssetStatus(req.Status)
+	}
+	if req.LocationID != "" {
+		asset.LocationID = &req.LocationID
+	}
+	if req.DepartmentID != "" {
+		asset.DepartmentID = &req.DepartmentID
+	}
 
 	if err := repository.UpdateAsset(asset); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update"})
@@ -115,15 +129,13 @@ func UpdateAsset(c *gin.Context) {
 func DeleteAsset(c *gin.Context) {
 	asset, err := repository.FindAssetByID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "asset not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	asset.Status = model.AssetDisposed
 	repository.UpdateAsset(asset)
 	c.JSON(http.StatusOK, gin.H{"message": "asset disposed"})
 }
-
-// ───────── Asset Actions ─────────
 
 func AssignAsset(c *gin.Context) {
 	var req dto.AssignAssetRequest
@@ -188,8 +200,6 @@ func GetMyAssets(c *gin.Context) {
 	c.JSON(http.StatusOK, assets)
 }
 
-// ───────── Asset Model CRUD ─────────
-
 func CreateAssetModel(c *gin.Context) {
 	var req dto.CreateAssetModelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -234,8 +244,6 @@ func GetAssetModel(c *gin.Context) {
 	c.JSON(http.StatusOK, m)
 }
 
-// ───────── Location CRUD ─────────
-
 func CreateLocation(c *gin.Context) {
 	var req dto.CreateLocationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -265,7 +273,7 @@ func ListLocations(c *gin.Context) {
 func GetLocation(c *gin.Context) {
 	l, err := repository.FindLocationByID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, l)
@@ -282,11 +290,21 @@ func UpdateLocation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if req.Name != "" { l.Name = req.Name }
-	if req.Building != "" { l.Building = req.Building }
-	if req.Floor != "" { l.Floor = req.Floor }
-	if req.Room != "" { l.Room = req.Room }
-	if req.Capacity > 0 { l.Capacity = req.Capacity }
+	if req.Name != "" {
+		l.Name = req.Name
+	}
+	if req.Building != "" {
+		l.Building = req.Building
+	}
+	if req.Floor != "" {
+		l.Floor = req.Floor
+	}
+	if req.Room != "" {
+		l.Room = req.Room
+	}
+	if req.Capacity > 0 {
+		l.Capacity = req.Capacity
+	}
 	repository.UpdateLocation(l)
 	c.JSON(http.StatusOK, l)
 }
@@ -298,8 +316,6 @@ func DeleteLocation(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
-
-// ───────── Department CRUD ─────────
 
 func CreateDepartment(c *gin.Context) {
 	var req dto.CreateDepartmentRequest
@@ -346,8 +362,12 @@ func UpdateDepartment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if req.Name != "" { d.Name = req.Name }
-	if req.Description != "" { d.Description = req.Description }
+	if req.Name != "" {
+		d.Name = req.Name
+	}
+	if req.Description != "" {
+		d.Description = req.Description
+	}
 	repository.UpdateDepartment(d)
 	c.JSON(http.StatusOK, d)
 }

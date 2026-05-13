@@ -8,4 +8,3 @@ type AuditSummary struct {
 	Difference      int           `json:"difference"`
 	AuditSessionID  string        `gorm:"size:36;not null;index" json:"auditSessionId"`
 }
-

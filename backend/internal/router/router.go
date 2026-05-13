@@ -19,10 +19,8 @@ func SetupRoutes(r *gin.Engine) {
 
 	api := r.Group("/api/v1")
 
-	// Public
 	api.POST("/auth/login", handler.Login)
 
-	// Protected routes
 	auth := api.Group("")
 	auth.Use(middleware.AuthRequired())
 	{
@@ -30,20 +28,16 @@ func SetupRoutes(r *gin.Engine) {
 		auth.GET("/auth/me", handler.GetMe)
 		auth.PUT("/auth/password", handler.ChangePassword)
 
-		// Dashboard
 		auth.GET("/dashboard", handler.GetDashboard)
 
-		// My assets (Employee+)
 		auth.GET("/my-assets", handler.GetMyAssets)
 
-		// Notifications (all roles)
 		auth.GET("/notifications", handler.ListNotifications)
-		auth.PUT("/notifications/:id/read", handler.MarkNotificationRead)
-		auth.PUT("/notifications/read-all", handler.MarkAllNotificationsRead)
+		auth.GET("/notifications/:id/read", handler.MarkNotificationRead)
+		auth.GET("/notifications/read-all", handler.MarkAllNotificationsRead)
 
-		// Assets (Custodian, Admin)
 		assets := auth.Group("/assets")
-		assets.Use(middleware.RequireRole(string(model.AssetCustodian), string(model.Admin), string(model.Accountant)))
+		assets.Use(middleware.RequireRole(string(model.AssetCustodian)))
 		{
 			assets.POST("", handler.CreateAsset)
 			assets.GET("", handler.ListAssets)
@@ -58,7 +52,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Asset Models
 		assetModels := auth.Group("/asset-models")
-		assetModels.Use(middleware.RequireRole(string(model.AssetCustodian), string(model.Admin)))
+		assetModels.Use(middleware.RequireRole(string(model.AssetCustodian)))
 		{
 			assetModels.POST("", handler.CreateAssetModel)
 			assetModels.GET("", handler.ListAssetModels)
@@ -67,7 +61,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Audit (Custodian, Admin)
 		audits := auth.Group("/audits")
-		audits.Use(middleware.RequireRole(string(model.AssetCustodian), string(model.Admin)))
+		audits.Use(middleware.RequireRole(string(model.Admin), string(model.AssetCustodian)))
 		{
 			audits.POST("", handler.StartAudit)
 			audits.GET("", handler.ListAuditSessions)
@@ -85,7 +79,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Reports (Custodian, Accountant, Admin)
 		reports := auth.Group("/reports")
-		reports.Use(middleware.RequireRole(string(model.AssetCustodian), string(model.Accountant), string(model.Admin)))
+		reports.Use(middleware.RequireRole(string(model.AssetCustodian), string(model.Admin), string(model.Accountant)))
 		{
 			reports.POST("/generate", handler.GenerateReport)
 			reports.GET("/download/:filename", handler.DownloadReport)

@@ -61,8 +61,12 @@ func CreateUser(c *gin.Context) {
 func ListUsers(c *gin.Context) {
 	var q dto.PaginationQuery
 	c.ShouldBindQuery(&q)
-	if q.Limit <= 0 { q.Limit = 20 }
-	if q.Page <= 0 { q.Page = 1 }
+	if q.Limit <= 0 {
+		q.Limit = 20
+	}
+	if q.Page <= 0 {
+		q.Page = 1
+	}
 
 	users, total, err := repository.ListUsers(q.Offset(), q.Limit, q.Search)
 	if err != nil {
@@ -109,11 +113,21 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if req.FirstName != "" { user.FirstName = req.FirstName }
-	if req.LastName != "" { user.LastName = req.LastName }
-	if req.Phone != "" { user.Phone = req.Phone }
-	if req.Status != "" { user.Status = model.UserStatus(req.Status) }
-	if req.DepartmentID != "" { user.DepartmentID = &req.DepartmentID }
+	if req.FirstName != "" {
+		user.FirstName = req.FirstName
+	}
+	if req.LastName != "" {
+		user.LastName = req.LastName
+	}
+	if req.Phone != "" {
+		user.Phone = req.Phone
+	}
+	if req.Status != "" {
+		user.Status = model.UserStatus(req.Status)
+	}
+	if req.DepartmentID != "" {
+		user.DepartmentID = &req.DepartmentID
+	}
 
 	if err := repository.UpdateUser(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})

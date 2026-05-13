@@ -10,4 +10,3 @@ type AuditEvidence struct {
 	ModelVersion   string    `gorm:"size:50" json:"modelVersion"`
 	AuditFindingID string    `gorm:"size:36;not null;index" json:"auditFindingId"`
 }
-

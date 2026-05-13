@@ -13,4 +13,3 @@ type Document struct {
 	Asset      *Asset       `gorm:"foreignKey:AssetID" json:"-"`
 	UploadedBy string       `gorm:"size:36;not null" json:"uploadedBy"`
 }
-

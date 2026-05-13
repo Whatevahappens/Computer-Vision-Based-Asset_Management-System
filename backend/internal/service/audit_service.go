@@ -41,35 +41,29 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 	if err != nil {
 		return nil, fmt.Errorf("audit session not found")
 	}
-
-	// Send image to CV service
 	detections, err := callCVService(imageData, filename)
 	if err != nil {
 		return nil, fmt.Errorf("CV service error: %v", err)
 	}
 
-	// Get registered assets at this location
 	registeredAssets, err := repository.ListAssetsByLocation(session.LocationID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Count detections by class name
 	detectedCounts := make(map[string]int)
 	for _, d := range detections.Detections {
 		detectedCounts[d.ClassName]++
 	}
 
-	// Count registered assets by name (simplified mapping)
 	registeredCounts := make(map[string]int)
-	registeredMap := make(map[string]string) // className -> assetID
+	registeredMap := make(map[string]string)
 	for _, a := range registeredAssets {
 		key := a.AssetName
 		registeredCounts[key]++
 		registeredMap[key] = a.ID
 	}
 
-	// Create findings for each detection
 	for _, det := range detections.Detections {
 		findingType := model.Matched
 		if registeredCounts[det.ClassName] <= 0 {
@@ -98,7 +92,6 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 		repository.CreateAuditEvidence(evidence)
 	}
 
-	// Create findings for missing assets
 	for _, a := range registeredAssets {
 		if detectedCounts[a.AssetName] <= 0 {
 			assetID := a.ID
@@ -114,7 +107,6 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 		}
 	}
 
-	// Build summary per category
 	allCategories := make(map[string]bool)
 	for k := range registeredCounts {
 		allCategories[k] = true
@@ -136,7 +128,6 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 		repository.CreateAuditSummary(summary)
 	}
 
-	// Mark session completed
 	now := time.Now()
 	session.EndedAt = &now
 	session.Status = model.Completed

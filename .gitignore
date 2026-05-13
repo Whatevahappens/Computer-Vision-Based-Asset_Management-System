@@ -1,50 +1,21 @@
-# Go
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-vendor/
-bin/
-
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-
-# Node
-node_modules/
-dist/
-build/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Environment
-.env
-*.env.local
-
-# Logs
+# Ignore all log files
 *.log
 
-# Models (large files)
-cv-service/models/*.pt
-!cv-service/models/README.md
+# Ignore .env files in the root only
+/.env
 
-# Uploads
-cv-service/uploads/*
-!cv-service/uploads/.gitkeep
+# Ignore the specific directory 'node_modules'
+node_modules
 
-# OS
-.DS_Store
-Thumbs.db
+# Ignore dist
+dist/
 
-# Reports
-/tmp/report_*
+# Ignore build
+build/
+
+# Ignore bin
+bin/
+
+# Ignore vscode and idea
+.vscode/
+.idea/

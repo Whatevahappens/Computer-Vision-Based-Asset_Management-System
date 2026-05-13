@@ -25,8 +25,7 @@ func ListAuditSessions(offset, limit int) ([]model.AuditSession, int64, error) {
 	var sessions []model.AuditSession
 	var total int64
 	database.DB.Model(&model.AuditSession{}).Count(&total)
-	err := database.DB.Preload("Location").Preload("Performer").
-		Offset(offset).Limit(limit).Order("started_at DESC").Find(&sessions).Error
+	err := database.DB.Preload("Location").Preload("Performer").Offset(offset).Limit(limit).Order("started_at DESC").Find(&sessions).Error
 	return sessions, total, err
 }
 
@@ -48,7 +47,6 @@ func CountAuditSessions() (int64, error) {
 	return count, err
 }
 
-// Notification
 func CreateNotification(n *model.Notification) error {
 	return database.DB.Create(n).Error
 }

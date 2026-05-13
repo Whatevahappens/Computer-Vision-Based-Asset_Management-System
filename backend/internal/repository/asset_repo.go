@@ -12,7 +12,7 @@ func CreateAsset(asset *model.Asset) error {
 func FindAssetByID(id string) (*model.Asset, error) {
 	var asset model.Asset
 	err := database.DB.Preload("AssetModel").Preload("Department").
-		Preload("Location").Preload("AssignedUser").
+		Preload("Location").Preload("AssingnedUser").
 		First(&asset, "id = ?", id).Error
 	return &asset, err
 }
@@ -28,8 +28,7 @@ func ListAssets(offset, limit int, search, status string) ([]model.Asset, int64,
 	var total int64
 	q := database.DB.Model(&model.Asset{})
 	if search != "" {
-		q = q.Where("asset_name ILIKE ? OR barcode ILIKE ? OR serial_number ILIKE ?",
-			"%"+search+"%", "%"+search+"%", "%"+search+"%")
+		q = q.Where("asset_name ILIKE ? OR barcode ILIKE ? OR serial_number ILIKE ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 	if status != "" {
 		q = q.Where("status = ?", status)
@@ -101,7 +100,6 @@ func GetAllAssetsForReport() ([]model.Asset, error) {
 	return assets, err
 }
 
-// Asset History
 func CreateAssetHistory(h *model.AssetHistory) error {
 	return database.DB.Create(h).Error
 }
@@ -112,7 +110,6 @@ func GetAssetHistory(assetID string) ([]model.AssetHistory, error) {
 	return history, err
 }
 
-// Asset Model CRUD
 func CreateAssetModel(m *model.AssetModel) error {
 	return database.DB.Create(m).Error
 }
@@ -129,7 +126,6 @@ func FindAssetModelByID(id string) (*model.AssetModel, error) {
 	return &m, err
 }
 
-// Location CRUD
 func CreateLocation(l *model.Location) error {
 	return database.DB.Create(l).Error
 }
@@ -154,7 +150,6 @@ func DeleteLocation(id string) error {
 	return database.DB.Delete(&model.Location{}, "id = ?", id).Error
 }
 
-// Department CRUD
 func CreateDepartment(d *model.Department) error {
 	return database.DB.Create(d).Error
 }
@@ -179,13 +174,14 @@ func DeleteDepartment(id string) error {
 	return database.DB.Delete(&model.Department{}, "id = ?", id).Error
 }
 
-// Document
 func CreateDocument(doc *model.Document) error {
 	return database.DB.Create(doc).Error
 }
 
-func ListDocumentsByAsset(assetID string) ([]model.Document, error) {
+func ListDocumentByAsset(assetID string) ([]model.Document, error) {
 	var docs []model.Document
 	err := database.DB.Where("asset_id = ?", assetID).Find(&docs).Error
 	return docs, err
 }
+
+

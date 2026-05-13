@@ -12,4 +12,3 @@ type Notification struct {
 	UserID    string           `gorm:"size:36;not null;index" json:"userId"`
 	User      User             `gorm:"foreignKey:UserID" json:"-"`
 }
-

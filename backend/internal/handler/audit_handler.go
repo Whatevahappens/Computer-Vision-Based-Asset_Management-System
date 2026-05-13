@@ -63,8 +63,12 @@ func GetAuditSession(c *gin.Context) {
 func ListAuditSessions(c *gin.Context) {
 	var q dto.PaginationQuery
 	c.ShouldBindQuery(&q)
-	if q.Limit <= 0 { q.Limit = 20 }
-	if q.Page <= 0 { q.Page = 1 }
+	if q.Limit <= 0 {
+		q.Limit = 20
+	}
+	if q.Page <= 0 {
+		q.Page = 1
+	}
 
 	sessions, total, err := repository.ListAuditSessions(q.Offset(), q.Limit)
 	if err != nil {
@@ -73,14 +77,14 @@ func ListAuditSessions(c *gin.Context) {
 	}
 
 	pages := int(total) / q.Limit
-	if int(total)%q.Limit != 0 { pages++ }
+	if int(total)%q.Limit != 0 {
+		pages++
+	}
 
 	c.JSON(http.StatusOK, dto.PaginatedResponse{
 		Data: sessions, Total: total, Page: q.Page, Limit: q.Limit, TotalPages: pages,
 	})
 }
-
-// ───────── Notifications ─────────
 
 func ListNotifications(c *gin.Context) {
 	userID := middleware.GetUserID(c)
@@ -107,5 +111,5 @@ func MarkAllNotificationsRead(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "all marked as read"})
+	c.JSON(http.StatusOK, gin.H{"message": "all mark as read"})
 }

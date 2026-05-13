@@ -14,32 +14,25 @@ import (
 )
 
 func main() {
-	// Load config
+
 	cfg := config.Load()
 
-	// Set JWT secret
 	middleware.SetJWTSecret(cfg.JWTSecret)
 
-	// Set CV service URL
 	service.SetCVServiceURL(cfg.CVServiceURL)
 
 	// Share config with handlers
 	handler.SetConfig(cfg)
 
-	// Connect database
 	database.Connect(cfg)
 
-	// Run migrations
 	database.Migrate()
 
-	// Seed admin user
 	database.SeedAdmin(cfg)
 
-	// Setup Gin
 	gin.SetMode(cfg.GinMode)
 	r := gin.Default()
 
-	// Setup routes
 	router.SetupRoutes(r)
 
 	// Start server

@@ -12,10 +12,10 @@ import (
 )
 
 type DashboardStats struct {
-	TotalAssets   int64 `json:"totalAssets"`
-	ActiveAssets  int64 `json:"activeAssets"`
-	TotalValue    int64 `json:"totalValue"`
-	TotalAudits   int64 `json:"totalAudits"`
+	TotalAssets  int64 `json:"totalAssets"`
+	ActiveAssets int64 `json:"activeAssets"`
+	TotalValue   int64 `json:"totalValue"`
+	TotalAudits  int64 `json:"totalAudits"`
 }
 
 func GetDashboardStats() (*DashboardStats, error) {
@@ -67,7 +67,7 @@ func generateAssetReport(format string) (string, error) {
 				fmt.Sprintf("%d", a.AcquisitionPrice),
 				fmt.Sprintf("%d", a.CurrentValue),
 				string(a.Status), loc,
-				a.AcquisitionDate.Format("2006-01-02"),
+				a.AcquisitionDate.Format("2006-01-01"),
 			})
 		}
 		w.Flush()
@@ -79,7 +79,6 @@ func generateAssetReport(format string) (string, error) {
 		defer f.Close()
 		json.NewEncoder(f).Encode(assets)
 	default:
-		// For PDF/DOCX/XLS we generate CSV as fallback
 		return generateAssetReport("csv")
 	}
 

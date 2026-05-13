@@ -48,9 +48,9 @@ func CalculateDepreciation(assetID, method, userID string) (*dto.DepreciationRes
 
 	repository.CreateAssetHistory(&model.AssetHistory{
 		ID: uuid.New().String(), ChangeType: model.Depreciated,
-		ChangedAt: time.Now(),
+		ChangedAt:   time.Now(),
 		Description: fmt.Sprintf("Monthly depreciation %.2f (%s). New value: %d", monthly, method, newValue),
-		AssetID: assetID, UserID: userID,
+		AssetID:     assetID, UserID: userID,
 	})
 
 	return &dto.DepreciationResult{
@@ -73,9 +73,9 @@ func RevalueAsset(assetID string, newValue int, reason, userID string) error {
 	}
 	repository.CreateAssetHistory(&model.AssetHistory{
 		ID: uuid.New().String(), ChangeType: model.Revalued,
-		ChangedAt: time.Now(),
+		ChangedAt:   time.Now(),
 		Description: fmt.Sprintf("Revalued from %d to %d. Reason: %s", oldVal, newValue, reason),
-		AssetID: assetID, UserID: userID,
+		AssetID:     assetID, UserID: userID,
 	})
 	return nil
 }

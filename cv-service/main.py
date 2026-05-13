@@ -33,8 +33,8 @@ MODEL_DIR = Path("models")
 UPLOAD_DIR.mkdir(exist_ok=True)
 MODEL_DIR.mkdir(exist_ok=True)
 
-# ── YOLO Model Loading ──
-# Tries YOLO26 first, falls back to YOLO11, then YOLOv8
+# YOLO Model hierarchy
+# tries YOLO26 first, falls back to YOLO11, then YOLOv8
 _model = None
 _model_name = "unknown"
 _model_version = "unknown"
@@ -54,8 +54,8 @@ def get_model():
         ("models/asset_detector.pt", "YOLO26-custom", "1.0"),
         ("models/yolo26m.pt", "YOLO26-M", "26.0"),
         ("models/yolo11m.pt", "YOLO11-M", "11.0"),
-        ("yolo11n.pt", "YOLO11-N", "11.0"),          # ultralytics auto-download
-        ("yolov8n.pt", "YOLOv8-N", "8.0"),            # ultralytics auto-download
+        ("yolo11n.pt", "YOLO11-N", "11.0"),          
+        ("yolov8n.pt", "YOLOv8-N", "8.0"),            
     ]
 
     for path, name, ver in candidates:

@@ -9,7 +9,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
+	Token string       `json:"token"`
 	User  UserResponse `json:"user"`
 }
 
@@ -142,13 +142,13 @@ type CalculateDepreciationRequest struct {
 }
 
 type DepreciationResult struct {
-	AssetID            string  `json:"assetId"`
-	AssetName          string  `json:"assetName"`
-	AcquisitionPrice   int     `json:"acquisitionPrice"`
-	CurrentValue       int     `json:"currentValue"`
-	MonthlyAmount      float64 `json:"monthlyAmount"`
-	Method             string  `json:"method"`
-	UsefulLifeMonths   int     `json:"usefulLifeMonths"`
+	AssetID          string  `json:"assetId"`
+	AssetName        string  `json:"assetName"`
+	AcquisitionPrice int     `json:"acquisitionPrice"`
+	CurrentValue     int     `json:"currentValue"`
+	MonthlyAmount    float64 `json:"monthlyAmount"`
+	Method           string  `json:"method"`
+	UsefulLifeMonths int     `json:"usefulLifeMonths"`
 }
 
 // Revaluation

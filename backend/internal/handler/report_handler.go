@@ -25,7 +25,6 @@ func GenerateReport(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
 	filePath, err := service.GenerateReport(req.ReportType, req.Format)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -44,8 +43,6 @@ func DownloadReport(c *gin.Context) {
 	filePath := "/tmp/" + filename
 	c.File(filePath)
 }
-
-// ───────── Depreciation ─────────
 
 func CalculateDepreciation(c *gin.Context) {
 	var req dto.CalculateDepreciationRequest
