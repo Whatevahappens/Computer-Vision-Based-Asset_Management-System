@@ -74,6 +74,18 @@ services:
     volumes:
       - ./cv-service/models:/app/models
       - ./cv-service/uploads:/app/uploads
+  
+   # ── React Frontend ──
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: asset_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   pgdata:
