@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL ──
+  postgres:
+    image: postgres:15-alpine
+    container_name: asset_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: asset_admin
+      POSTGRES_PASSWORD: changeme_secret
+      POSTGRES_DB: asset_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U asset_admin -d asset_management"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    container_name: asset_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Go Backend ──
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: asset_backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: asset_admin
+      DB_PASSWORD: changeme_secret
+      DB_NAME: asset_management
+      DB_SSLMODE: disable
+      REDIS_ADDR: redis:6379
+      JWT_SECRET: your-256-bit-secret-change-in-production
+      JWT_EXPIRY_HOURS: 24
+      SERVER_PORT: 8080
+      GIN_MODE: release
+      CV_SERVICE_URL: http://cv-service:8000
+      ADMIN_EMAIL: admin@must.edu.mn
+      ADMIN_PASSWORD: Admin@123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Python CV Service ──
+  cv-service:
+    build:
+      context: ./cv-service
+      dockerfile: Dockerfile
+    container_name: asset_cv_service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./cv-service/models:/app/models
+      - ./cv-service/uploads:/app/uploads
+
+volumes:
+  pgdata:
