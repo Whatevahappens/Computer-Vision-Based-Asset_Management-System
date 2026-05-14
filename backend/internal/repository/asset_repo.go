@@ -12,7 +12,7 @@ func CreateAsset(asset *model.Asset) error {
 func FindAssetByID(id string) (*model.Asset, error) {
 	var asset model.Asset
 	err := database.DB.Preload("AssetModel").Preload("Department").
-		Preload("Location").Preload("AssingnedUser").
+		Preload("Location").Preload("AssignedUser").
 		First(&asset, "id = ?", id).Error
 	return &asset, err
 }
@@ -183,5 +183,3 @@ func ListDocumentByAsset(assetID string) ([]model.Document, error) {
 	err := database.DB.Where("asset_id = ?", assetID).Find(&docs).Error
 	return docs, err
 }
-
-
