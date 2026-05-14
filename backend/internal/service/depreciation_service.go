@@ -79,3 +79,15 @@ func RevalueAsset(assetID string, newValue int, reason, userID string) error {
 	})
 	return nil
 }
+func ComputeMonthly(method string, price, currentValue, lifeMonths int) (float64, error) {
+	switch model.DepreciationMethod(method) {
+	case model.StraightLine:
+		return math.Round(float64(price)/float64(lifeMonths)*100) / 100, nil
+	case model.DecliningBalance:
+		years := float64(lifeMonths) / 12.0
+		rate := 2.0 / years
+		return math.Round(float64(currentValue)*rate/12.0*100) / 100, nil
+	default:
+		return 0, fmt.Errorf("unsupported method: %s", method)
+	}
+}
