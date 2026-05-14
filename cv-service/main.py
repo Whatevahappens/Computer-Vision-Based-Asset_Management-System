@@ -94,9 +94,10 @@ def preprocess_image(image_bytes: bytes) -> np.ndarray:
     """
     Decode, resize to 640×640, apply CLAHE for low-light enhancement.
     """
+    if not image_bytes:
+        raise ValueError("Failed to decode image: empty input")
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
     if img is None:
         raise ValueError("Failed to decode image")
 
