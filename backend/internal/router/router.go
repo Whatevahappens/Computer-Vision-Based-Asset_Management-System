@@ -37,7 +37,7 @@ func SetupRoutes(r *gin.Engine) {
 		auth.GET("/notifications/read-all", handler.MarkAllNotificationsRead)
 
 		assets := auth.Group("/assets")
-		assets.Use(middleware.RequireRole(string(model.AssetCustodian)))
+		assets.Use(middleware.RequireRole(string(model.AssetCustodian), string(model.Admin)))
 		{
 			assets.POST("", handler.CreateAsset)
 			assets.GET("", handler.ListAssets)
