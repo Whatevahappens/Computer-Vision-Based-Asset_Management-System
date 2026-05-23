@@ -10,6 +10,8 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -139,7 +141,22 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 func callCVService(imageData []byte, filename string) (*dto.CVDetectionResponse, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", filename)
+
+	// Detect content type from file extension
+	contentType := "application/octet-stream"
+	switch {
+	case strings.HasSuffix(strings.ToLower(filename), ".jpg"), strings.HasSuffix(strings.ToLower(filename), ".jpeg"):
+		contentType = "image/jpeg"
+	case strings.HasSuffix(strings.ToLower(filename), ".png"):
+		contentType = "image/png"
+	case strings.HasSuffix(strings.ToLower(filename), ".webp"):
+		contentType = "image/webp"
+	}
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, filename))
+	h.Set("Content-Type", contentType)
+	part, err := writer.CreatePart(h)
 	if err != nil {
 		return nil, err
 	}
