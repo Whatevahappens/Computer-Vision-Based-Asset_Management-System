@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"sort"
 	"strings"
 	"time"
 
@@ -38,14 +39,64 @@ func StartAudit(locationID, notes, userID string) (*model.AuditSession, error) {
 	return session, nil
 }
 
-func RunCVAudit(sessionID string, imageData []byte, filename string, userID string) (*model.AuditSession, error) {
+var classMap = map[string]string{
+	"chair":     "Сандал",
+	"monitor":   "Дэлгэц",
+	"table":     "Ширээ",
+	"processor": "Процессор",
+}
+
+func mapClassName(yoloClass string) string {
+	if mapped, ok := classMap[yoloClass]; ok {
+		return mapped
+	}
+	return yoloClass
+}
+
+func getBaseAssetName(name string) string {
+	if idx := strings.LastIndex(name, " #"); idx > 0 {
+		return name[:idx]
+	}
+	return name
+}
+
+type ImageInput struct {
+	Data     []byte
+	Filename string
+}
+
+func RunCVAudit(sessionID string, images []ImageInput, userID string) (*model.AuditSession, error) {
 	session, err := repository.FindAuditSessionByID(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("audit session not found")
 	}
-	detections, err := callCVService(imageData, filename)
-	if err != nil {
-		return nil, fmt.Errorf("CV service error: %v", err)
+
+	maxDetected := make(map[string]int)                 // category → max count across corners
+	allDetections := make(map[string][]dto.CVDetection) // for detailed findings
+	var lastImagePath string
+	var modelName, modelVer string
+
+	for _, img := range images {
+		detections, err := callCVService(img.Data, img.Filename)
+		if err != nil {
+			return nil, fmt.Errorf("CV service error: %v", err)
+		}
+		lastImagePath = detections.ImagePath
+		modelName = detections.ModelName
+		modelVer = detections.ModelVer
+
+		cornerCounts := make(map[string]int)
+		for _, d := range detections.Detections {
+			mapped := mapClassName(d.ClassName)
+			cornerCounts[mapped]++
+			allDetections[mapped] = append(allDetections[mapped], d)
+		}
+
+		for cat, count := range cornerCounts {
+			if count > maxDetected[cat] {
+				maxDetected[cat] = count
+			}
+		}
 	}
 
 	registeredAssets, err := repository.ListAssetsByLocation(session.LocationID)
@@ -53,59 +104,76 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 		return nil, err
 	}
 
-	detectedCounts := make(map[string]int)
-	for _, d := range detections.Detections {
-		detectedCounts[d.ClassName]++
-	}
-
 	registeredCounts := make(map[string]int)
-	registeredMap := make(map[string]string)
+	registeredByCategory := make(map[string][]model.Asset)
 	for _, a := range registeredAssets {
-		key := a.AssetName
-		registeredCounts[key]++
-		registeredMap[key] = a.ID
+		base := getBaseAssetName(a.AssetName)
+		registeredCounts[base]++
+		registeredByCategory[base] = append(registeredByCategory[base], a)
 	}
 
-	for _, det := range detections.Detections {
-		findingType := model.Matched
-		if registeredCounts[det.ClassName] <= 0 {
-			findingType = model.Unregistered
-		}
-		finding := &model.AuditFinding{
-			ID:             uuid.New().String(),
-			Type:           findingType,
-			Confidence:     det.Confidence,
-			Notes:          fmt.Sprintf("Detected %s (confidence: %.2f)", det.ClassName, det.Confidence),
-			AuditSessionID: sessionID,
-		}
-		if assetID, ok := registeredMap[det.ClassName]; ok {
-			finding.DetectedAssetID = &assetID
-		}
-		repository.CreateAuditFinding(finding)
+	for category, maxCount := range maxDetected {
+		regCount := registeredCounts[category]
+		dets := allDetections[category]
 
-		evidence := &model.AuditEvidence{
-			ID:             uuid.New().String(),
-			FilePath:       detections.ImagePath,
-			CapturedAt:     time.Now(),
-			ModelName:      detections.ModelName,
-			ModelVersion:   detections.ModelVer,
-			AuditFindingID: finding.ID,
+		sort.Slice(dets, func(i, j int) bool {
+			return dets[i].Confidence > dets[j].Confidence
+		})
+		if len(dets) > maxCount {
+			dets = dets[:maxCount]
 		}
-		repository.CreateAuditEvidence(evidence)
-	}
 
-	for _, a := range registeredAssets {
-		if detectedCounts[a.AssetName] <= 0 {
-			assetID := a.ID
+		for i, det := range dets {
+			findingType := model.Matched
+			if i >= regCount {
+				findingType = model.Unregistered
+			}
+
 			finding := &model.AuditFinding{
-				ID:              uuid.New().String(),
-				Type:            model.Missing,
-				Confidence:      0,
-				Notes:           fmt.Sprintf("Registered asset '%s' not detected", a.AssetName),
-				AuditSessionID:  sessionID,
-				ExpectedAssetID: &assetID,
+				ID:             uuid.New().String(),
+				Type:           findingType,
+				Confidence:     det.Confidence,
+				Notes:          fmt.Sprintf("Detected %s (confidence: %.2f)", category, det.Confidence),
+				AuditSessionID: sessionID,
+			}
+			if findingType == model.Matched {
+				assets := registeredByCategory[category]
+				if i < len(assets) {
+					assetID := assets[i].ID
+					finding.DetectedAssetID = &assetID
+				}
 			}
 			repository.CreateAuditFinding(finding)
+
+			evidence := &model.AuditEvidence{
+				ID:             uuid.New().String(),
+				FilePath:       lastImagePath,
+				CapturedAt:     time.Now(),
+				ModelName:      modelName,
+				ModelVersion:   modelVer,
+				AuditFindingID: finding.ID,
+			}
+			repository.CreateAuditEvidence(evidence)
+		}
+	}
+
+	for category, regCount := range registeredCounts {
+		detCount := maxDetected[category]
+		if detCount < regCount {
+			missingCount := regCount - detCount
+			assets := registeredByCategory[category]
+			for i := regCount - missingCount; i < regCount; i++ {
+				assetID := assets[i].ID
+				finding := &model.AuditFinding{
+					ID:              uuid.New().String(),
+					Type:            model.Missing,
+					Confidence:      0,
+					Notes:           fmt.Sprintf("'%s' олдсонгүй (%d бүртгэлтэйгээс %d илэрсэн)", category, regCount, detCount),
+					AuditSessionID:  sessionID,
+					ExpectedAssetID: &assetID,
+				}
+				repository.CreateAuditFinding(finding)
+			}
 		}
 	}
 
@@ -113,12 +181,13 @@ func RunCVAudit(sessionID string, imageData []byte, filename string, userID stri
 	for k := range registeredCounts {
 		allCategories[k] = true
 	}
-	for k := range detectedCounts {
+	for k := range maxDetected {
 		allCategories[k] = true
 	}
+
 	for cat := range allCategories {
 		reg := registeredCounts[cat]
-		det := detectedCounts[cat]
+		det := maxDetected[cat]
 		summary := &model.AuditSummary{
 			ID:              uuid.New().String(),
 			Category:        model.AssetCategory(cat),
@@ -142,7 +211,6 @@ func callCVService(imageData []byte, filename string) (*dto.CVDetectionResponse,
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	// Detect content type from file extension
 	contentType := "application/octet-stream"
 	switch {
 	case strings.HasSuffix(strings.ToLower(filename), ".jpg"), strings.HasSuffix(strings.ToLower(filename), ".jpeg"):
