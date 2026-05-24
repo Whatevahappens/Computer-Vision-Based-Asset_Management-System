@@ -46,6 +46,30 @@ func CreateAsset(c *gin.Context) {
 	c.JSON(http.StatusCreated, full)
 }
 
+func BulkCreateAsset(c *gin.Context) {
+	var req dto.BulkCreateAssetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	acqDate, err := time.Parse("2006-01-02", req.AcquisitionDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date format"})
+		return
+	}
+	userID := middleware.GetUserID(c)
+	assets, err := service.BulkCreateAssets(
+		req.AssetName, req.Quantity, req.AcquisitionPrice, acqDate,
+		req.UsefulLifeMonths, req.Nature, req.Description,
+		req.AssetModelID, req.DepartmentID, req.LocationID, userID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"created": len(assets), "assets": assets})
+}
+
 func GetAsset(c *gin.Context) {
 	asset, err := repository.FindAssetByID(c.Param("id"))
 	if err != nil {
