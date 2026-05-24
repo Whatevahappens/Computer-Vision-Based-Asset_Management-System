@@ -28,22 +28,33 @@ func StartAudit(c *gin.Context) {
 
 func RunCVAudit(c *gin.Context) {
 	sessionID := c.Param("id")
-
-	file, header, err := c.Request.FormFile("file")
+	form, err := c.MultipartForm()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "image file required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "image files required"})
 		return
 	}
-	defer file.Close()
-
-	imageData, err := io.ReadAll(file)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
+	files := form.File["files"]
+	if len(files) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "at least one image required"})
 		return
+	}
+
+	var images []service.ImageInput
+	for _, fh := range files {
+		f, err := fh.Open()
+		if err != nil {
+			continue
+		}
+		data, err := io.ReadAll(f)
+		f.Close()
+		if err != nil {
+			continue
+		}
+		images = append(images, service.ImageInput{Data: data, Filename: fh.Filename})
 	}
 
 	userID := middleware.GetUserID(c)
-	result, err := service.RunCVAudit(sessionID, imageData, header.Filename, userID)
+	result, err := service.RunCVAudit(sessionID, images, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
