@@ -198,3 +198,16 @@ type PaginatedResponse struct {
 	Limit      int         `json:"limit"`
 	TotalPages int         `json:"totalPages"`
 }
+
+type BulkCreateAssetRequest struct {
+	Quantity         int    `json:"quantity" binding:"required,min=1,max=100"`
+	AssetName        string `json:"assetName" binding:"required"`
+	AcquisitionPrice int    `json:"acquisitionPrice" binding:"required"`
+	AcquisitionDate  string `json:"acquisitionDate" binding:"required"`
+	UsefulLifeMonths int    `json:"usefulLifeMonths" binding:"required"`
+	Nature           string `json:"nature"`
+	Description      string `json:"description"`
+	AssetModelID     string `json:"assetModelId"`
+	DepartmentID     string `json:"departmentId"`
+	LocationID       string `json:"locationId"`
+}
