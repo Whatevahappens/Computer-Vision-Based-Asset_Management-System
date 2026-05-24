@@ -48,6 +48,7 @@ func SetupRoutes(r *gin.Engine) {
 			assets.POST("/:id/transfer", handler.TransferAsset)
 			assets.POST("/:id/dispose", handler.DisposeAsset)
 			assets.GET("/:id/history", handler.GetAssetHistory)
+			assets.POST("/bulk", handler.BulkCreateAsset)
 		}
 
 		// Asset Models
@@ -75,6 +76,7 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			depreciation.POST("/calculate", handler.CalculateDepreciation)
 			depreciation.POST("/revalue", handler.RevalueAsset)
+			depreciation.POST("/calculate-all", handler.CalculateAllDepreciation)
 		}
 
 		// Reports (Custodian, Accountant, Admin)
