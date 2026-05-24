@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
   Table, Button, Space, Tag, Input, Typography, Modal, Form, Select,
   InputNumber, DatePicker, message, Popconfirm, Drawer, Timeline,
 } from "antd";
 import { PlusOutlined, SearchOutlined, HistoryOutlined } from "@ant-design/icons";
-import { listAssets, createAsset, deleteAsset, getAssetHistory, listLocations, listDepartments, listAssetModels } from "../api";
+import { listAssets, createAsset, deleteAsset, getAssetHistory, listLocations, listDepartments, listAssetModels, bulkCreateAssets } from "../api";
 import type { Asset, Location, Department, AssetModel, AssetHistory } from "../types";
 import dayjs from "dayjs";
 
@@ -66,6 +66,23 @@ const AssetsPage: React.FC = () => {
       message.error("Алдаа гарлаа");
     }
   };
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+const [bulkForm] = Form.useForm();
+
+const handleBulkCreate = async (vals: any) => {
+  try {
+    const res = await bulkCreateAssets({
+      ...vals,
+      acquisitionDate: vals.acquisitionDate.format("YYYY-MM-DD"),
+    });
+    message.success(`${res.data.created} эд хөрөнгө бүртгэгдлээ`);
+    setBulkModalOpen(false);
+    bulkForm.resetFields();
+    load();
+  } catch {
+    message.error("Алдаа гарлаа");
+  }
+};
 
   const columns = [
     { title: "Код", dataIndex: "barcode", width: 130 },
@@ -111,6 +128,9 @@ const AssetsPage: React.FC = () => {
           />
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
             Шинэ эд хөрөнгө
+          </Button>
+          <Button icon={<PlusOutlined />} onClick={() => setBulkModalOpen(true)}>
+            Бөөнөөр бүртгэх
           </Button>
         </Space>
       </div>
@@ -163,6 +183,47 @@ const AssetsPage: React.FC = () => {
           <Button type="primary" htmlType="submit" block>Бүртгэх</Button>
         </Form>
       </Modal>
+      <Modal
+  title="Бөөнөөр бүртгэх" open={bulkModalOpen}
+  onCancel={() => setBulkModalOpen(false)} footer={null} width={520}
+>
+  <Form form={bulkForm} layout="vertical" onFinish={handleBulkCreate}>
+    <Form.Item name="quantity" label="Тоо ширхэг" rules={[{ required: true }]}>
+      <InputNumber style={{ width: "100%" }} min={1} max={100} />
+    </Form.Item>
+    <Form.Item name="assetName" label="Нэр" rules={[{ required: true }]}>
+      <Input placeholder="Сандал, Монитор гэх мэт" />
+    </Form.Item>
+    <Form.Item name="assetModelId" label="Загвар">
+      <Select allowClear placeholder="Сонгох" options={
+        models.map((m) => ({ value: m.id, label: `${m.brand} ${m.modelName}` }))
+      } />
+    </Form.Item>
+    <Space style={{ width: "100%" }} size="middle">
+      <Form.Item name="acquisitionPrice" label="Нэгж үнэ" rules={[{ required: true }]} style={{ flex: 1 }}>
+        <InputNumber style={{ width: "100%" }} min={0} />
+      </Form.Item>
+      <Form.Item name="usefulLifeMonths" label="Ашиглалт (сар)" rules={[{ required: true }]} style={{ flex: 1 }}>
+        <InputNumber style={{ width: "100%" }} min={1} />
+      </Form.Item>
+    </Space>
+    <Form.Item name="acquisitionDate" label="Худалдан авсан огноо" rules={[{ required: true }]}>
+      <DatePicker style={{ width: "100%" }} />
+    </Form.Item>
+    <Space style={{ width: "100%" }} size="middle">
+      <Form.Item name="locationId" label="Байршил" style={{ flex: 1 }}>
+        <Select allowClear placeholder="Сонгох" options={locations.map((l) => ({ value: l.id, label: l.name }))} />
+      </Form.Item>
+      <Form.Item name="departmentId" label="Хэлтэс" style={{ flex: 1 }}>
+        <Select allowClear placeholder="Сонгох" options={departments.map((d) => ({ value: d.id, label: d.name }))} />
+      </Form.Item>
+    </Space>
+    <Form.Item name="description" label="Тайлбар">
+      <Input.TextArea rows={2} />
+    </Form.Item>
+    <Button type="primary" htmlType="submit" block>Бүртгэх</Button>
+  </Form>
+</Modal>
 
       {/* History Drawer */}
       <Drawer
@@ -185,3 +246,4 @@ const AssetsPage: React.FC = () => {
 };
 
 export default AssetsPage;
+
