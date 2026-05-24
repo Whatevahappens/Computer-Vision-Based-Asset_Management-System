@@ -47,6 +47,9 @@ export const getAsset = (id: string) => api.get<Asset>(`/assets/${id}`);
 export const createAsset = (data: Record<string, unknown>) =>
   api.post<Asset>("/assets", data);
 
+export const bulkCreateAssets = (data: any) =>
+  api.post("/assets/bulk", data);
+
 export const updateAsset = (id: string, data: Record<string, unknown>) =>
   api.put<Asset>(`/assets/${id}`, data);
 
